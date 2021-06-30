@@ -6,9 +6,8 @@ const port = process.env.PORT || 5000;
 const url = process.env.MONGODB_URL || "";
 
 connect(url, CONNECTION_OPTIONS).then(() => {
-    console.log("connected to mongodb");
     app.listen(port, () => {
-        console.log("listening on: http://localhost:" + port);
+        console.log("CONNECTED TO DATABASE \nLISTENING: http://localhost:" + port);
     });
 })
 .catch((err) => console.log("MONGODB ERROR: ", err));

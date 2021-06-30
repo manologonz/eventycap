@@ -1,4 +1,4 @@
-import {Schema, ObjectId, Document, Model, model} from "mongoose";
+import {Schema, ObjectId, Document, Model, model, PopulatedDoc} from "mongoose";
 import {IUser} from "./user";
 
 
@@ -12,11 +12,10 @@ const eventSchema = new Schema<EventDocument, EventModel>({
     },
     creator: {
         type: Schema.Types.ObjectId,
-        ref: "User",
-        required: true
+        ref: "User", required: true
     },
     administrators: [{ type: Schema.Types.ObjectId, ref: "User" }],
-    category: [String],
+    category: String,
     tags: [{ type: String }],
     date: {
         type: String,
@@ -56,7 +55,7 @@ export interface IEvent {
     banner: string;
     creator: IUser | ObjectId;
     administrators: IUser[] | ObjectId[];
-    category: string[];
+    category: string;
     tags: string[];
     date: Date;
     place: string,
@@ -72,18 +71,12 @@ export interface EventBaseDocument extends IEvent, Document {
 
 }
 
+// TODO change applicats IUser for the IApplicanst model interface
 export interface EventDocument extends EventBaseDocument {
-    creator: ObjectId;
-    administrators: ObjectId[];
-    applicants: ObjectId[];
+    creator: PopulatedDoc<IUser & Document>;
+    administrators: PopulatedDoc<IUser & Document>[],
+    applicants: PopulatedDoc<IUser & Document>[];
 }
-
-export interface EventPopulatedDocument extends EventBaseDocument {
-    creator: IUser;
-    administrators: IUser[];
-    applicants: IUser[];
-}
-
 export interface EventModel extends Model<EventDocument> {
 
 }

@@ -79,7 +79,7 @@ export function registerValidators(): ValidationChain[] {
         },
         birthDate: {
             exists: {errorMessage: requiredMessage("birthDate"), bail: true},
-            isDate: {errorMessage: dateMessage("birthDate")}
+            isDate: {errorMessage: dateMessage("birthDate")},
         },
         role: {
             exists: {errorMessage: requiredMessage("role"), bail: true},

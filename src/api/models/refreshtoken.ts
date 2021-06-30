@@ -32,10 +32,6 @@ export interface RefreshTokenBaseDocument extends IRefreshToken, Document {
 export interface RefreshTokenDocument extends RefreshTokenBaseDocument {
 }
 
-export interface RefreshTokenPopulatedDocument extends RefreshTokenBaseDocument {
-    user: IUser;
-}
-
 export interface RefreshTokenModel extends Model<RefreshTokenDocument> {
 
 }

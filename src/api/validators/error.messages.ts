@@ -26,10 +26,14 @@ export function floatMessage(field: string): string {
     return `[${field}] must be float`;
 }
 
-export function dateMessage(field: string): string {
-    return `[${field}] must be a date`;
+export function dateMessage(field: string, format: string="yyyy-mm-dd"): string {
+    return `[${field}] must be a valid date, try format [${format}]`;
 }
 
 export function notCeroMessage(field: string): string {
     return `[${field}] can't be zero`;
+}
+
+export function booleanMessage(field: string): string {
+    return `[${field}] must be boolean`;
 }

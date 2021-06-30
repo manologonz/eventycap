@@ -26,8 +26,7 @@ async function createUniqueRefreshToken(): Promise<string> {
      */
     let refresh_token: RefreshTokenDocument | null;
     let _refresh_token: string;
-    while(true) {
-        _refresh_token = uuid();
+    while(true) { _refresh_token = uuid();
         refresh_token = await RefreshToken.findOne({token: _refresh_token});
         if(!refresh_token) break;
     }
@@ -59,7 +58,8 @@ function getTokenOptions(): jwt.SignOptions {
 
 async function registerRefreshToken(user: string): Promise<RefreshTokenDocument> {
     // * Creates a new refresh token on database.
-    const refresh_token = createUniqueRefreshToken();
+    await RefreshToken.deleteOne({user: user});
+    const refresh_token = await createUniqueRefreshToken();
     const _expire = new Date(new Date().getTime() + (REFRESH_TOKEN_EXPIRES * 60 * 1000));
     const newToken = new RefreshToken({user, token: refresh_token, expires_at: _expire});
     await newToken.save();
@@ -149,6 +149,7 @@ export async function register(req: Request, res: Response, next: NextFunction) 
         const user = new User(userData);
         await user.save();
         res.json({
+            _id: user._id,
             username: userData.username,
             firstName: userData.firstName,
             lastName: userData.lastName,
@@ -199,8 +200,9 @@ export async function refreshToken(req: Request, res: Response, next: NextFuncti
 
         // sending response
         const params = getCookieParams(new_refresh_token.token);
+        const _expire = new Date(new Date().getTime() + (REFRESH_TOKEN_EXPIRES * 60 * 1000));
         res.cookie(...params);
-        res.json({token: newToken, token_expiry: options.expiresIn});
+        res.json({token: newToken, token_expiry: _expire});
     } catch(error) {
         next(error);
     }
