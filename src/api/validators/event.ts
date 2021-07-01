@@ -2,6 +2,7 @@ import { checkSchema, ValidationChain} from "express-validator";
 import { stringMessage, emptyStringMessage, requiredMessage, dateMessage, intMessage, booleanMessage, floatMessage, arrayMessage} from "./error.messages";
 
 export function eventCerateValidators():ValidationChain[]  {
+    // banner validator not added, beacous it's an image.
     return checkSchema({
         name: {
             exists: {errorMessage: requiredMessage("name"), bail: true},
