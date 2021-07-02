@@ -15,7 +15,9 @@ dotenv.config();
 const app = express();
 
 // middlewares
-app.use(morgan("dev"));
+if(process.env.NODE_ENV !== "test") {
+    app.use(morgan("dev"));
+}
 app.use(helmet());
 app.use(cors());
 app.use(cookieParser())

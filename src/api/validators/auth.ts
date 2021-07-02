@@ -65,8 +65,8 @@ export function registerValidators(): ValidationChain[] {
             exists: {errorMessage: requiredMessage("username"), bail: true},
             isString: {errorMessage: stringMessage("username"), bail: true},
             isLength: {
-                errorMessage: "[fristName] must have in between 5 and 20 characters of length",
-                options: {min: 5, max: 20}
+                errorMessage: "[firstName] must have in between 5 and 20 characters of length",
+                options: {min: 3, max: 20}
             }
         },
         lastName:{
@@ -74,7 +74,7 @@ export function registerValidators(): ValidationChain[] {
             isString: {errorMessage: stringMessage("username"), bail: true},
             isLength: {
                 errorMessage: "[fristName] must have in between 5 and 20 characters of length",
-                options: {min: 5, max: 20}
+                options: {min: 3, max: 20}
             }
         },
         birthDate: {

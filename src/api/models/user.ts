@@ -51,13 +51,9 @@ userShcema.statics.findUserAndValidatePassword = async function(
         let userInfo;
         if(type === ValidationType.EMAIL) {
             userInfo = await this.findOne({email: field});
-            console.log(field);
-        } else if(type === ValidationType.USERNAME) {
-            console.log("fetching email")
             userInfo = await this.findOne({username: field});
         }
         if(!userInfo) return null;
-        console.log("fetching hashing")
         const validPassword = await bcrypt.compare(passwd, userInfo.password);
         if(!validPassword) return null;
         return userInfo;
