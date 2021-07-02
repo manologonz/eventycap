@@ -1,7 +1,7 @@
 import {Router} from "express";
 import {createEvent, addAdminToEvent, subscribeToEvent, unsubscribeToEvent} from "../controllers/event";
-import { isAuthenticated, isUserCreator, isEventOwnerOrAdmin, isSubscribedToEvent} from "api/permissions";
-import { eventCerateValidators } from "api/validators/event";
+import { isAuthenticated, isUserCreator, isEventOwnerOrAdmin, isSubscribedToEvent} from "../permissions";
+import { eventCerateValidators } from "../validators/event";
 
 const router = Router();
 

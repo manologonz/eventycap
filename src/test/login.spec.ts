@@ -1,5 +1,5 @@
-describe("server checks", function () {
-    it("server is created without error", function () {
+describe("POST /api/auth/login", function () {
+    it("should say hi", function() {
         console.log("hi");
     });
 });

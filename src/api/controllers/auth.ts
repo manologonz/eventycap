@@ -208,17 +208,17 @@ export async function refreshToken(req: Request, res: Response, next: NextFuncti
     }
 }
 
-export async function getMe(req: Request, res: Response, next: NextFunction) {
-    try {
-        if(!req.user) throw new HttpError("Not Authorized", 403);
-        res.json({
-            username: req.user.username,
-            firstName: req.user.firstName,
-            lastName: req.user.lastName,
-            verifiedEmal: req.user.verifiedEmail,
-            role: req.user.role
-        });
-    } catch (error) {
-        next(error);
-    }
-}
+// export async function getMe(req: Request, res: Response, next: NextFunction) {
+//     try {
+//         if(!req.user) throw new HttpError("Not Authorized", 403);
+//         res.json({
+//             username: req.user.username,
+//             firstName: req.user.firstName,
+//             lastName: req.user.lastName,
+//             verifiedEmal: req.user.verifiedEmail,
+//             role: req.user.role
+//         });
+//     } catch (error) {
+//         next(error);
+//     }
+// }
