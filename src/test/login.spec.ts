@@ -1,6 +1,5 @@
 import request from "supertest";
 import User from "../api/models/user";
-import RefreshToken from "../api/models/refreshtoken";
 import app from "../api/app";
 import db from "../db";
 import { user, creds } from "./utils";
@@ -9,12 +8,10 @@ describe("POST /api/auth/login", function () {
     beforeAll(async function () {
         await db.connect();
         const res = await request(app).post("/api/auth/register").send(user);
-        console.log(res.body)
     });
 
     afterAll(async function () {
         await User.deleteMany({});
-        await RefreshToken.deleteMany({});
         await db.close();
     });
 

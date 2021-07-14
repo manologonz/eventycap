@@ -1,14 +1,14 @@
 import { Request, Response, NextFunction } from "express";
-import { getSecret } from "../utils/helpers";
-import { HttpError } from "../utils/types";
-import User, { ITokenPayload, UserRole } from "../models/user";
+import { HttpError } from "../../utils/types";
+import User, { IAuthTokenPayload, UserRole } from "../models/user";
+import { JWT_SECRET } from "../../utils/constants";
 import Event from "../models/event";
 import * as jwt from "jsonwebtoken";
 
 function getTokenFromHeader(req: Request): string {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.split(" ")[1]) {
-        throw new HttpError("No authentication credentials found", 401);
+        throw new HttpError("No authentication credentials found", 403);
     }
     return authHeader.split(" ")[1];
 }
@@ -16,13 +16,12 @@ function getTokenFromHeader(req: Request): string {
 export function isAuthenticated(req: Request, res: Response, next: NextFunction) {
     try {
         const token = getTokenFromHeader(req);
-        const secret = getSecret();
-        const payload = jwt.verify(token, secret) as ITokenPayload;
+        const payload = jwt.verify(token, JWT_SECRET) as IAuthTokenPayload;
         req.user = payload;
         next();
     } catch (error) {
         if (error instanceof jwt.TokenExpiredError) {
-            const expiredTokenError = new HttpError("token expired", 403);
+            const expiredTokenError = new HttpError("token expired", 401);
             next(expiredTokenError);
         }
         next(new HttpError("Not authorized", 403));
@@ -31,8 +30,10 @@ export function isAuthenticated(req: Request, res: Response, next: NextFunction)
 
 export function isUserCreator(req: Request, res: Response, next: NextFunction) {
     try {
-        if (req.user && req.user.role !== UserRole[UserRole.CREATOR]) next();
-        throw new HttpError("Not Authorized", 403);
+        if (!req.user || req.user.role !== UserRole[UserRole.CREATOR]) {
+            throw new HttpError("Not Authorized", 403);
+        }
+        next();
     } catch (error) {
         next(error);
     }
@@ -49,9 +50,9 @@ export async function isEventOwnerOrAdmin(req: Request, res: Response, next: Nex
             next();
         }
     } catch (error) {
-        next(error);
-    }
+        next(error); }
 }
+
 // TODO: Add Subscribers model validation
 export async function isSubscribedToEvent(req: Request, res: Response, next: NextFunction) {
     try {

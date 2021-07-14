@@ -1,5 +1,5 @@
 import User from "../models/user";
-import { HttpError } from "../utils/types";
+import { HttpError } from "../../utils/types";
 import {checkSchema, ValidationChain, CustomValidator} from "express-validator";
 import {requiredMessage,stringMessage, emptyStringMessage, dateMessage, intMessage} from "./error.messages";
 

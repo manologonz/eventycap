@@ -1,5 +1,4 @@
 import {Request, Response, NextFunction} from "express";
-import {LoginMethod} from "./constants";
 import * as dotenv from "dotenv";
 dotenv.config();
 
@@ -35,7 +34,7 @@ export type ErrorResponse = {
 export type AuthTokens = {
     new_access_token: string,
     new_refresh_token: string,
-    refresh_cookie_expiry: Date,
+    refresh_token_expiry: Date,
     access_token_expiry: Date
 };
 

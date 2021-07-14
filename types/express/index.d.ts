@@ -1,9 +1,9 @@
-import {ITokenPayload} from "../../src/api/models/user";
+import {IAuthTokenPayload} from "../../src/api/models/user";
 
 declare global {
     namespace Express {
         interface Request {
-            user: ITokenPayload | null;
+            user: IAuthTokenPayload | null;
         }
     }
 }

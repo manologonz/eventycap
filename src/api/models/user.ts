@@ -1,7 +1,7 @@
 import {Schema, Document, Model, model} from "mongoose";
 import {JwtPayload} from "jsonwebtoken";
 import * as bcrypt from "bcryptjs";
-import { HttpError } from "../utils/types";
+import { HttpError } from "../../utils/types";
 
 const userShcema = new Schema<UserDocument, UserModel>({
     username: { type: String,
@@ -50,9 +50,9 @@ userShcema.statics.findUserAndValidatePassword = async function(
 ): Promise<UserDocument | null> {
     try {
         const user = await this.findOne({email});
-        if(!user) throw new HttpError("wrong username or password", 400);
+        if(!user) return null
         const validPassword = await bcrypt.compare(passwd, user.password);
-        if(!validPassword) throw new HttpError("wrong username or password", 400);
+        if(!validPassword) return null;
         return user;
     } catch(err) {
         return null;
@@ -97,7 +97,7 @@ export interface UserDocument extends UserBaseDocument {
 }
 
 export interface UserModel extends Model<UserDocument> {
-    findUserAndValidatePassword(passwd: string, email: string): Promise<UserDocument>;
+    findUserAndValidatePassword(passwd: string, email: string): Promise<UserDocument | null>;
 }
 
 export default model<UserDocument, UserModel>("User", userShcema);

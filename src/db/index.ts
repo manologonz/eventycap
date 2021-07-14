@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { MONGODB_URL, DBNAME, TEST_DBNAME, CONNECTION_OPTIONS} from "../api/utils/constants";
+import { MONGODB_URL, DBNAME, TEST_DBNAME, CONNECTION_OPTIONS} from "../utils/constants";
 
 function connect(): Promise<void> {
     return new Promise((resolve, reject) => {

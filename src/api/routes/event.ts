@@ -9,7 +9,7 @@ const createPerms = [isAuthenticated, isUserCreator];
 const addAdminPerms = [isAuthenticated, isEventOwnerOrAdmin];
 const unsubscribePerms = [isAuthenticated, isSubscribedToEvent];
 
-router.post("/", createPerms, eventCerateValidators(), createEvent);
+router.post("/", createPerms, createEvent);
 router.post("/:eventId/add/admin", addAdminPerms, addAdminToEvent);
 router.post("/:eventId/subscribe", isAuthenticated, subscribeToEvent);
 router.post("/:eventId/unsuscribe", isAuthenticated, unsubscribeToEvent);

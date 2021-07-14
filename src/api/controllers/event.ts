@@ -1,11 +1,12 @@
 import {Request, Response, NextFunction} from "express";
 import Event, {IEvent, EventDocument} from "../models/event";
 import {validationResult} from "express-validator";
-import {checkValidationErrors} from "../utils/helpers";
+import {checkValidationErrors} from "../../utils/helpers";
 
 // TODO: Add create event functionality
 export function createEvent(req: Request, res: Response, next: NextFunction) {
     try {
+        console.log(req.body)
         checkValidationErrors(validationResult(req));
         res.json({detai: "Not supported yet"});
     } catch(err) {
