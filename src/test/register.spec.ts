@@ -12,7 +12,7 @@ describe("POST /api/auth/register", function () {
         await User.deleteMany({});
     });
 
-    afterAll(async function() {
+    afterAll(async function () {
         db.close();
     });
 

@@ -20,27 +20,12 @@ const matchingPasswords: CustomValidator = (input, {req}) => {
     return true;
 }
 
-export function emailLoginValidator(): ValidationChain[]{
+export function loginValidators(): ValidationChain[]{
     return checkSchema({
         email: {
             exists: {errorMessage: requiredMessage("email"), bail: true},
             notEmpty: {errorMessage: emptyStringMessage("email"), bail: true},
             isEmail: {errorMessage: "enter a valid message"}
-        },
-        password: {
-            exists: {errorMessage: requiredMessage("password"), bail: true},
-            isString: {errorMessage: stringMessage("password"), bail: true},
-            notEmpty: {errorMessage: emptyStringMessage("password")}
-        }
-    });
-}
-
-export function usernameLoginValidator(): ValidationChain[]{
-    return checkSchema({
-        username: {
-            exists: {errorMessage: requiredMessage("username"), bail: true},
-            isString: {errorMessage: stringMessage("username"), bail: true},
-            notEmpty: {errorMessage: emptyStringMessage("username"), bail: true}
         },
         password: {
             exists: {errorMessage: requiredMessage("password"), bail: true},

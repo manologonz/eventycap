@@ -1,5 +1,7 @@
 import {Schema, Document, Model, model} from "mongoose";
+import {JwtPayload} from "jsonwebtoken";
 import * as bcrypt from "bcryptjs";
+import { HttpError } from "../utils/types";
 
 const userShcema = new Schema<UserDocument, UserModel>({
     username: { type: String,
@@ -44,19 +46,14 @@ userShcema.virtual("fullname").get(function(this: UserDocument) {
 
 userShcema.statics.findUserAndValidatePassword = async function(
     passwd: string,
-    field: string,
-    type: ValidationType
+    email: string,
 ): Promise<UserDocument | null> {
     try {
-        let userInfo;
-        if(type === ValidationType.EMAIL) {
-            userInfo = await this.findOne({email: field});
-            userInfo = await this.findOne({username: field});
-        }
-        if(!userInfo) return null;
-        const validPassword = await bcrypt.compare(passwd, userInfo.password);
-        if(!validPassword) return null;
-        return userInfo;
+        const user = await this.findOne({email});
+        if(!user) throw new HttpError("wrong username or password", 400);
+        const validPassword = await bcrypt.compare(passwd, user.password);
+        if(!validPassword) throw new HttpError("wrong username or password", 400);
+        return user;
     } catch(err) {
         return null;
     }
@@ -83,7 +80,7 @@ export interface IUser {
     birthDate: string
 }
 
-export interface IUserTokenInfo {
+export interface IAuthTokenPayload extends JwtPayload{
     _id: string,
     username: string,
     firstName: string,
@@ -91,12 +88,6 @@ export interface IUserTokenInfo {
     role: string
     verifiedEmail: boolean,
 }
-
-export interface ITokenPayload extends IUserTokenInfo {
-    iat: number,
-    exp: number
-}
-
 export interface UserBaseDocument extends IUser, Document{
     fullname: string;
 }
@@ -106,7 +97,7 @@ export interface UserDocument extends UserBaseDocument {
 }
 
 export interface UserModel extends Model<UserDocument> {
-    findUserAndValidatePassword(passwd: string, field: string, type: ValidationType): Promise<UserDocument | null>;
+    findUserAndValidatePassword(passwd: string, email: string): Promise<UserDocument>;
 }
 
 export default model<UserDocument, UserModel>("User", userShcema);

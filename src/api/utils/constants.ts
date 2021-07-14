@@ -15,13 +15,15 @@ export enum LoginMethod {
 
 export const JWT_TOKEN_EXPIRES = process.env.TOKEN_EXPIRES
     ? parseInt(process.env.TOKEN_EXPIRES)
-    : 15; // mins
+    : 15; // seconds | minutes | hours | days
+
 export const REFRESH_TOKEN_EXPIRES = process.env.REFRESH_TOKEN_EXPIRES
     ? parseInt(process.env.REFRESH_TOKEN_EXPIRES)
-    : (60 * 24 * 30); // 30 days
+    : 30; // seconds | minutes | hours | days
+
 export const JWT_SECRET = process.env.JWT_SECRET || "superSecureSecret123";
 
-export const MONGODB_URL = process.env.MONGODB_URL || "";
+export const MONGODB_URL = process.env.MONGODB_URL || "mongodb://localhost:27017";
 
 export const DBNAME = process.env.DBNAME || "mydb";
 

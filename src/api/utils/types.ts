@@ -32,30 +32,11 @@ export type ErrorResponse = {
     stack?: string ;
 };
 
+export type AuthTokens = {
+    new_access_token: string,
+    new_refresh_token: string,
+    refresh_cookie_expiry: Date,
+    access_token_expiry: Date
+};
+
 export type Port = string | number;
-
-export type Endpoint = (req: Request, res: Response, next: NextFunction) => Promise<void>;
-
-export class LoginObject {
-    method: string | null | undefined;
-
-    constructor() {
-        this.method = process.env.LOGIN_METHOD;
-    }
-
-    isEmailLogin(): boolean {
-        return this.method === LoginMethod.EMAIL;
-    }
-
-    isUsernameLogin(): boolean {
-        return this.method === LoginMethod.USERNAME;
-    }
-
-    isMethodNotSet(): boolean {
-        return (
-            !this.method ||
-            (this.method !== LoginMethod.EMAIL &&
-                this.method !== LoginMethod.USERNAME)
-        );
-    }
-}
