@@ -1,3 +1,5 @@
+import {Types} from "mongoose";
+import {Request, Response, NextFunction as Next} from "express";
 import { Result } from "express-validator";
 import User, { UserDocument, IAuthTokenPayload, UserRole} from "../api/models/user";
 import { JWT_SECRET, ACCESS_TOKEN_EXPIRY, REFRESH_TOKEN_EXPIRY } from "./constants";
@@ -89,4 +91,29 @@ export async function refreshTokens(refresh_token: string): Promise<AuthTokens |
     } catch(err) {
         return null;
     }
+}
+
+export function bodyToJSON(req: Request, res: Response, next: Next) {
+    try {
+        const input = JSON.parse(req.body.data);
+        req.body = input;
+        next();
+    } catch(error) {
+        next(new HttpError("wrong data format", 400));
+    }
+}
+
+type IDParam = {
+    id: string,
+    model: string
+}
+
+export function isValidObjId(idParams: IDParam[]): string[] {
+    idParams.forEach(({id, model}) => {
+        if(!Types.ObjectId.isValid(id)) {
+            throw new HttpError(`${model} not found`, 404);
+        }
+    });
+
+    return idParams.map(({id}) => id);
 }

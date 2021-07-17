@@ -1,4 +1,4 @@
-import {Schema, ObjectId, Document, Model, model, PopulatedDoc} from "mongoose";
+import {Schema, Document, Model, model, PopulatedDoc} from "mongoose";
 import {IUser} from "./user";
 
 
@@ -10,7 +10,9 @@ const eventSchema = new Schema<EventDocument, EventModel>({
     banner: {
         type: String,
     },
-    creator: { type: Schema.Types.ObjectId, ref: "User", required: true }, administrators: [{ type: Schema.Types.ObjectId, ref: "User" }], category: String,
+    creator: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    administrators: [{ type: Schema.Types.ObjectId, ref: "User" }],
+    category: String,
     tags: [{ type: String }],
     date: {
         type: String,
@@ -24,10 +26,7 @@ const eventSchema = new Schema<EventDocument, EventModel>({
         type: String,
         required: true,
     },
-    applicants: {
-        type: Schema.Types.ObjectId,
-        ref: "AplicantsGroup",
-    },
+    applicants: [{type: Schema.Types.ObjectId, ref: "User"}],
     limit: {
         type: Number,
         required: true,
@@ -59,7 +58,7 @@ export interface IEvent {
     limit: number,
     isPublished: boolean,
     isFree: boolean,
-    price: number,
+    price?: number,
 }
 
 export interface EventBaseDocument extends IEvent, Document {
