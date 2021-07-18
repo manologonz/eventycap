@@ -4,6 +4,7 @@ import User, { IAuthTokenPayload, UserRole } from "../models/user";
 import { JWT_SECRET } from "../../utils/constants";
 import Event from "../models/event";
 import * as jwt from "jsonwebtoken";
+import { isValidObjId } from "../../utils/helpers";
 
 function getTokenFromHeader(req: Request): string {
     const authHeader = req.headers.authorization;
@@ -53,13 +54,20 @@ export async function isEventOwnerOrAdmin(req: Request, res: Response, next: Nex
         next(error); }
 }
 
-// TODO: Add Subscribers model validation
 export async function isSubscribedToEvent(req: Request, res: Response, next: NextFunction) {
     try {
-        const eventId = req.params.eventId;
-        if(!req.user) throw new HttpError("Not Authorized", 400);
+        const [eventId] = isValidObjId([{id: req.params.eventId, model: "event"}]);
         const event = await Event.findOne({ _id: eventId });
+
+        if(req.user === null) throw new HttpError("Not Authorized", 400);
+
         if(!event) throw new HttpError("Event not found", 404);
+
+        const subscriber = event.applicants.find(
+            applicant => applicant.toString() === req.user!._id
+        );
+
+        if(!subscriber) throw new HttpError("you are not subscribed to event", 400);
         next();
     } catch (error) {
        next(error);

@@ -126,19 +126,49 @@ export async function removeAdminFromEvent(req: Request, res: Response, next: Ne
     }
 }
 
-// TODO: Add user subscription to event functionality
-export function subscribeToEvent(req: Request, res: Response, next: NextFunction) {
+export async function subscribeToEvent(req: Request, res: Response, next: NextFunction) {
     try {
-        res.json({detail: "Not supported yet"});
+        if(!req.user) throw new HttpError("Not Authorized", 403);
+
+        const _id = getValidatedId(req);
+
+        const event = await Event.findOneAndUpdate(
+            {_id},
+            {
+                $addToSet: {
+                    applicants: req.user._id
+                }
+            });
+
+        if(!event) throw new HttpError("Event not found", 404);
+
+        res.status(200).json({detail: "subscribed"});
     } catch (error) {
        next(error);
     }
 }
 
-// TODO: Add user unsubscription to event functionality
-export function unsubscribeToEvent(req: Request, res: Response, next: NextFunction) {
+export async function unsubscribeToEvent(req: Request, res: Response, next: NextFunction) {
     try {
-       res.json({detail: "Not supported yet"});
+        if(!req.user) throw new HttpError("Not Authorized", 403);
+
+        const eventId = getValidatedId(req);
+
+        const event = await Event.findOneAndUpdate(
+            { _id: eventId },
+            {
+                $pull: {
+                    administrators: req.user._id
+                },
+            },
+            {
+                new: true,
+            }
+        );
+
+        if(!event) throw new HttpError("event not found", 404);
+
+        res.status(200).json({detail: "unsubscribed"});
     } catch (error) {
        next();
     }
