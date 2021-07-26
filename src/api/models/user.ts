@@ -1,7 +1,8 @@
-import {Schema, Document, Model, model} from "mongoose";
+import {Schema, Document, Model, model, PopulatedDoc} from "mongoose";
 import {JwtPayload} from "jsonwebtoken";
 import * as bcrypt from "bcryptjs";
-import { HttpError } from "../../utils/types";
+import {IEvent} from "./event";
+
 
 const userShcema = new Schema<UserDocument, UserModel>({
     username: { type: String,
@@ -38,6 +39,12 @@ const userShcema = new Schema<UserDocument, UserModel>({
         type: String,
         required: true,
     },
+    subscriptions: [
+        {
+            type: Schema.Types.ObjectId,
+            ref: "Event"
+        }
+    ]
 });
 
 userShcema.virtual("fullname").get(function(this: UserDocument) {
@@ -77,7 +84,8 @@ export interface IUser {
     email: string,
     password: string,
     verifiedEmail: boolean,
-    birthDate: string
+    birthDate: string,
+    subscriptions: PopulatedDoc<IEvent & Document>[]
 }
 
 export interface IAuthTokenPayload extends JwtPayload{

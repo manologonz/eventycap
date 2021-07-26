@@ -1,7 +1,6 @@
 import {Request, Response, NextFunction} from "express";
 import * as dotenv from "dotenv";
 dotenv.config();
-
 export class HttpError extends Error {
     statusCode: number;
     message: string;
@@ -37,5 +36,3 @@ export type AuthTokens = {
     refresh_token_expiry: Date,
     access_token_expiry: Date
 };
-
-export type Port = string | number;

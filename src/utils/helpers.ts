@@ -2,9 +2,9 @@ import {Types} from "mongoose";
 import {Request, Response, NextFunction as Next} from "express";
 import { Result } from "express-validator";
 import User, { UserDocument, IAuthTokenPayload, UserRole} from "../api/models/user";
+import Event, { EventFilter } from "../api/models/event";
 import { JWT_SECRET, ACCESS_TOKEN_EXPIRY, REFRESH_TOKEN_EXPIRY } from "./constants";
-import { AuthTokens, HttpError } from "./types";
-import { ValidationErrors } from "./types";
+import { AuthTokens, HttpError, ValidationErrors} from "./types";
 import moment from "moment";
 import jwt from "jsonwebtoken";
 
@@ -116,4 +116,46 @@ export function isValidObjId(idParams: IDParam[]): string[] {
     });
 
     return idParams.map(({id}) => id);
+}
+
+export function buildEventFilter(req: Request): EventFilter {
+    const filter: EventFilter = {
+        isPublished: true
+    };
+
+    if(req.query.name) {
+        filter["name"] = {$regex: `${req.query.name}`, $options: "i"};
+    }
+
+    if(req.query.creator) {
+        filter["creator"] = req.query.creator as string;
+    }
+
+    if(req.query.category) {
+        filter["category"] = req.query.category as string;
+    }
+
+    if(req.query.date) {
+        filter["date"] = new Date(req.query.date as string);
+    }
+
+    if(req.query.place) {
+        filter["place"] = req.query.place as string;
+    }
+
+    if(req.query.limit) {
+        filter["limit"] = parseInt(req.query.limit as string);
+    }
+
+    if(req.query.free === "true") {
+        filter["isFree"] = true;
+    } else if(req.query.false === "false") {
+        filter["isFree"] = false;
+    }
+
+    if(req.query.price) {
+        filter["price"] = parseFloat(req.query.price as string);
+    }
+
+    return filter;
 }

@@ -52,6 +52,7 @@ export async function register(
             email: req.body.email,
             verifiedEmail: false,
             birthDate: req.body.birthDate,
+            subscriptions:[]
         };
         let user = new User(userData);
         user = await user.save();

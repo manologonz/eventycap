@@ -1,8 +1,9 @@
 import {Request, Response, NextFunction} from "express";
 import Event, {IEvent, EventDocument} from "../models/event";
+import User from "../models/user";
 import { IMAGE_URL } from "../../utils/constants";
 import {validationResult} from "express-validator";
-import {checkValidationErrors, isValidObjId} from "../../utils/helpers";
+import {buildEventFilter, checkValidationErrors, isValidObjId} from "../../utils/helpers";
 import { HttpError } from "../../utils/types";
 import paginate from "express-paginate";
 import {Types} from "mongoose";
@@ -39,7 +40,7 @@ export async function createEvent(req: Request, res: Response, next: NextFunctio
             creator: req.user._id,
             administrators: [],
             applicants: [],
-            isPublished: false
+            isPublished: true
         };
 
         if(req.body.price) event.price = req.body.price;
@@ -59,19 +60,22 @@ export async function createEvent(req: Request, res: Response, next: NextFunctio
     }
 }
 
-// TODO: Add event filtering functionality
 export async function listEvents(req: Request, res: Response, next: NextFunction) {
     try {
         const limit = parseInt(req.query.limit as string, 10);
         const skip = req.skip || 0;
         const currentPage = parseInt(req.query.page as string, 10);
-        const count = await Event.find({}).countDocuments({});
-        const result = await Event.find({}).limit(limit).skip(skip).lean().exec();
+        const filter = buildEventFilter(req);
+
+        const count = await Event.find(filter).countDocuments({});
+        const result = await Event.find(filter).limit(limit).skip(skip).lean().exec();
         const pageCount = Math.ceil(count/limit);
         let next: string | boolean = paginate.hasNextPages(req)(pageCount);
+
         if(next) {
             next = `${req.protocol}://${req.get("host")}/${req.url}?page=${currentPage + 1}`;
         }
+
         res.status(200).json({
             count,
             next,
@@ -142,6 +146,16 @@ export async function subscribeToEvent(req: Request, res: Response, next: NextFu
 
         if(!event) throw new HttpError("Event not found", 404);
 
+
+        await User.findOneAndUpdate(
+            { _id: req.user._id },
+            {
+                $addToSet: {
+                    subscriptions: event._id,
+                },
+            }
+        );
+
         res.status(200).json({detail: "subscribed"});
     } catch (error) {
        next(error);
@@ -158,7 +172,7 @@ export async function unsubscribeToEvent(req: Request, res: Response, next: Next
             { _id: eventId },
             {
                 $pull: {
-                    administrators: req.user._id
+                    applicants: req.user._id
                 },
             },
             {
@@ -167,6 +181,15 @@ export async function unsubscribeToEvent(req: Request, res: Response, next: Next
         );
 
         if(!event) throw new HttpError("event not found", 404);
+
+        await User.findOneAndUpdate(
+            { _id: req.user._id },
+            {
+                $pull: {
+                    subscriptions: event._id,
+                },
+            }
+        );
 
         res.status(200).json({detail: "unsubscribed"});
     } catch (error) {

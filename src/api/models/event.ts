@@ -1,4 +1,4 @@
-import {Schema, Document, Model, model, PopulatedDoc} from "mongoose";
+import {Schema, Document, Model, model, PopulatedDoc, FilterQuery} from "mongoose";
 import {IUser} from "./user";
 
 
@@ -70,6 +70,9 @@ export interface EventDocument extends EventBaseDocument {
 
 export interface EventModel extends Model<EventDocument> {
 
+}
+
+export interface EventFilter extends FilterQuery<EventDocument>{
 }
 
 export default model<EventDocument, EventModel>("Event", eventSchema);

@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { HttpError } from "../../utils/types";
 import User, { IAuthTokenPayload, UserRole } from "../models/user";
 import { JWT_SECRET } from "../../utils/constants";
-import Event from "../models/event";
+import Event, { EventDocument } from "../models/event";
 import * as jwt from "jsonwebtoken";
 import { isValidObjId } from "../../utils/helpers";
 
@@ -40,14 +40,35 @@ export function isUserCreator(req: Request, res: Response, next: NextFunction) {
     }
 }
 
+interface IsUserOrOwnerParams {
+    userId: string,
+    eventId: string,
+
+}
+
+async function isUserEventOwnerOrAdmin(params: IsUserOrOwnerParams): Promise<boolean> {
+    const { userId, eventId } = params;
+
+    const event = await Event.findOne({ _id: eventId });
+    if (!event) throw new HttpError("Event not found", 404);
+
+    const existAdmin = event.administrators.find(
+        (admin) => userId === admin.toString()
+    );
+    if (userId === event.creator.toString() || existAdmin) return true;
+
+    return false;
+}
+
 export async function isEventOwnerOrAdmin(req: Request, res: Response, next: NextFunction) {
     try {
         const eventId = req.params.eventId;
         if (!req.user) throw new HttpError("Not Autorized", 403);
-        const event = await Event.findOne({ _id: eventId });
-        if(!event) throw new HttpError("Event not found", 404);
-        const existAdmin = event.administrators.find((admin) => req.user!._id.toString() === admin.toString());
-        if(req.user._id === event.creator.toString() || existAdmin) {
+        const existsAdminOrEventOwner = await isUserEventOwnerOrAdmin({
+            userId: req.user._id,
+            eventId
+        });
+        if(existsAdminOrEventOwner) {
             next();
         }
     } catch (error) {
@@ -71,5 +92,25 @@ export async function isSubscribedToEvent(req: Request, res: Response, next: Nex
         next();
     } catch (error) {
        next(error);
+    }
+}
+
+export async function canSubscribeToEvent(req: Request, res: Response, next: NextFunction) {
+    try {
+        const eventId = req.params.eventId;
+        if(!req.user) throw new HttpError("Not Authorized", 403);
+
+        const existsAdminOrEventOwner = await isUserEventOwnerOrAdmin({
+            userId: req.user._id,
+            eventId
+        });
+
+        if (existsAdminOrEventOwner) {
+            throw new HttpError("You can't subscribte to event", 400);
+        }
+
+        next();
+    } catch (error) {
+        next(error);
     }
 }
