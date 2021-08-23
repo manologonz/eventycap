@@ -35,6 +35,12 @@ export const IMAGE_FOLDER = process.env.NODE_ENV === "production" ? "images" : "
 
 export const IMAGE_URL = "images";
 
+export const PASSWORD_LENGTH = 8;
+
+export const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || "";
+
+export const MAILCHIMP_API_KEY = process.env.MAILCHIMP_API_KEY || "";
+
 function createMediaFolders(): string[] {
     const mainFolder = path.join(__dirname, "..", "..", IMAGE_FOLDER);
     const defaultFolder = path.join(mainFolder, "default");
@@ -79,3 +85,9 @@ const imageFilter = (req: Request, file: Express.Multer.File, cb: any) => {
 };
 
 export const upload = multer({storage, fileFilter: imageFilter});
+
+export type ResetPasswordMailParams = {
+    toEmail: string,
+    userId: string,
+    resetToken: string
+}

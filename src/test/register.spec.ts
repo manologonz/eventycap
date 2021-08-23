@@ -28,6 +28,7 @@ describe("POST /api/auth/register", function () {
                 password: "securepassword",
                 confirmPassword: "securepassword"
             });
+            console.log(response);
             expect(response.statusCode).toBe(200);
         });
 

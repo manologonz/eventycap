@@ -3,10 +3,26 @@ import {Request, Response, NextFunction as Next} from "express";
 import { Result } from "express-validator";
 import User, { UserDocument, IAuthTokenPayload, UserRole} from "../api/models/user";
 import Event, { EventFilter } from "../api/models/event";
-import { JWT_SECRET, ACCESS_TOKEN_EXPIRY, REFRESH_TOKEN_EXPIRY } from "./constants";
+import {
+    JWT_SECRET,
+    ACCESS_TOKEN_EXPIRY,
+    REFRESH_TOKEN_EXPIRY,
+    SENDGRID_API_KEY,
+} from "./constants";
 import { AuthTokens, HttpError, ValidationErrors} from "./types";
+import { ResetPasswordMailParams } from "./constants";
+import { CustomValidator } from "express-validator";
+import sendgridEmailHandler, {MailDataRequired} from "@sendgrid/mail";
 import moment from "moment";
 import jwt from "jsonwebtoken";
+import axios from "axios";
+import nodemail from "nodemailer";
+
+// custom validators
+export const matchingPasswords: CustomValidator = (input, {req}) => {
+    if(input !== req.body.newPassword) throw new HttpError("passwords don't match", 400);
+    return true;
+}
 
 export function checkValidationErrors(result: Result) {
     const errors: ValidationErrors = {};
@@ -77,8 +93,7 @@ export async function refreshTokens(refresh_token: string): Promise<AuthTokens |
     let tokenPayload: RefreshTokenPayload;
     try {
         tokenPayload = jwt.decode(refresh_token) as RefreshTokenPayload;
-    } catch(err) {
-        return null;
+    } catch(err) { return null;
     }
 
     if(!tokenPayload) return null;
@@ -158,4 +173,81 @@ export function buildEventFilter(req: Request): EventFilter {
     }
 
     return filter;
+}
+
+export interface IsUserOrOwnerParams {
+    userId: string,
+    eventId: string,
+}
+
+export async function isUserEventOwnerOrAdmin(params: IsUserOrOwnerParams): Promise<boolean> {
+    const { userId, eventId } = params;
+
+    const event = await Event.findOne({ _id: eventId });
+    if (!event) throw new HttpError("Event not found", 404);
+
+    const existAdmin = event.administrators.find(
+        (admin) => userId === admin.toString()
+    );
+    if (userId === event.creator.toString() || existAdmin) return true;
+
+    return false;
+}
+
+export type UserInformationInEvent = {
+    username: string,
+    fullName: string
+}
+
+export function getPopulatedAdminsInEvent(admins: UserDocument[]): UserInformationInEvent[] {
+    return admins.map((admin) => ({
+            username: admin.username,
+            fullName: `${admin.firstName} ${admin.lastName}`
+        }
+    ));
+};
+
+export function getPopulatedCreatorInEvent(creator: UserDocument): UserInformationInEvent {
+    return {
+        username: creator.username,
+        fullName: `${creator.firstName} ${creator.lastName}`
+    };
+}
+
+export function getUserFromRequest(req: Request): IAuthTokenPayload | null {
+    const token = req.headers.authorization as string;
+    if(!token || !token.split(" ")[1]){
+        return null;
+    }
+    try {
+        const payload = jwt.verify(token.split(" ")[1], JWT_SECRET) as IAuthTokenPayload;
+        return payload;
+    } catch (error) {
+        if (error instanceof jwt.TokenExpiredError) {
+            throw new HttpError("token expired", 401);
+        }
+       return null;
+    }
+}
+
+export async function sendMail(mailData: MailDataRequired) {
+        sendgridEmailHandler.setApiKey(SENDGRID_API_KEY);
+        const response = await sendgridEmailHandler.send(mailData);
+}
+
+export async function sendResetPasswordMail(data: ResetPasswordMailParams) {
+    try {
+        const {toEmail, userId, resetToken} = data;
+        const link = `http://localhost:5000/reset-password?token=${resetToken}`;
+        const options = {
+            to: toEmail,
+            from: "service@senderemailtest.xyz",
+            subject: "Password Reset",
+            text: "Click the link below to reset your password",
+            html: `<p>test email, backend link: ${link} </p>`
+        }
+        await sendMail(options);
+    } catch(error) {
+        // TODO: add error handling
+    }
 }

@@ -6,6 +6,7 @@ import {
     unsubscribeToEvent,
     listEvents,
     removeAdminFromEvent,
+    eventDetail
 } from "../controllers/event";
 import {
     isAuthenticated,
@@ -21,7 +22,7 @@ import {bodyToJSON} from "../../utils/helpers";
 const router = Router();
 
 const createPerms = [isAuthenticated, isUserCreator];
-const addAdminPerms = [isAuthenticated, isEventOwnerOrAdmin];
+const administratorPerms = [isAuthenticated, isEventOwnerOrAdmin];
 const unsubscribePerms = [isAuthenticated, isSubscribedToEvent];
 const subscribePerms = [isAuthenticated, canSubscribeToEvent];
 
@@ -32,10 +33,11 @@ router.post("/",
     eventCreateValidators(),
     createEvent
 );
-router.post("/:eventId/add/admin", addAdminPerms, adminsValidators(), addAdminToEvent);
+router.post("/:eventId/add/admin", administratorPerms, adminsValidators(), addAdminToEvent);
 router.post("/:eventId/subscribe", subscribePerms, subscribeToEvent);
 router.post("/:eventId/unsubscribe", unsubscribePerms, unsubscribeToEvent);
 router.get("/", listEvents);
+router.get("/:eventId", administratorPerms, eventDetail);
 router.delete("/:eventId/remove/:adminId/admin", removeAdminFromEvent);
 
 export default router;

@@ -4,7 +4,7 @@ import User, { IAuthTokenPayload, UserRole } from "../models/user";
 import { JWT_SECRET } from "../../utils/constants";
 import Event, { EventDocument } from "../models/event";
 import * as jwt from "jsonwebtoken";
-import { isValidObjId } from "../../utils/helpers";
+import { isValidObjId, isUserEventOwnerOrAdmin, IsUserOrOwnerParams} from "../../utils/helpers";
 
 function getTokenFromHeader(req: Request): string {
     const authHeader = req.headers.authorization;
@@ -40,25 +40,7 @@ export function isUserCreator(req: Request, res: Response, next: NextFunction) {
     }
 }
 
-interface IsUserOrOwnerParams {
-    userId: string,
-    eventId: string,
 
-}
-
-async function isUserEventOwnerOrAdmin(params: IsUserOrOwnerParams): Promise<boolean> {
-    const { userId, eventId } = params;
-
-    const event = await Event.findOne({ _id: eventId });
-    if (!event) throw new HttpError("Event not found", 404);
-
-    const existAdmin = event.administrators.find(
-        (admin) => userId === admin.toString()
-    );
-    if (userId === event.creator.toString() || existAdmin) return true;
-
-    return false;
-}
 
 export async function isEventOwnerOrAdmin(req: Request, res: Response, next: NextFunction) {
     try {
@@ -111,6 +93,21 @@ export async function canSubscribeToEvent(req: Request, res: Response, next: Nex
 
         next();
     } catch (error) {
+        next(error);
+    }
+}
+
+export async function isAccountOwner(req: Request, res: Response, next: NextFunction) {
+    try {
+        const userId = req.params.userId as string;
+        console.log(userId, req.user?._id);
+        isValidObjId([{id: userId, model: "user"}]);
+        if(req.user && req.user._id.toString() === userId.toString()) {
+            next();
+        } else {
+            throw new HttpError("Not Authorized", 403);
+        }
+    } catch(error) {
         next(error);
     }
 }

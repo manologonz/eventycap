@@ -1,12 +1,18 @@
 import {Request, Response, NextFunction} from "express";
 import Event, {IEvent, EventDocument} from "../models/event";
-import User from "../models/user";
+import User, { UserRole } from "../models/user";
 import { IMAGE_URL } from "../../utils/constants";
 import {validationResult} from "express-validator";
-import {buildEventFilter, checkValidationErrors, isValidObjId} from "../../utils/helpers";
+import {buildEventFilter,
+    checkValidationErrors,
+    isValidObjId,
+    getPopulatedAdminsInEvent,
+    getPopulatedCreatorInEvent,
+    UserInformationInEvent,
+    isUserEventOwnerOrAdmin,
+} from "../../utils/helpers";
 import { HttpError } from "../../utils/types";
 import paginate from "express-paginate";
-import {Types} from "mongoose";
 import fs from "fs";
 import path from "path";
 
@@ -194,5 +200,68 @@ export async function unsubscribeToEvent(req: Request, res: Response, next: Next
         res.status(200).json({detail: "unsubscribed"});
     } catch (error) {
        next();
+    }
+}
+
+
+type EventDetailInformation = {
+    name: string,
+    banner: string,
+    creator: UserInformationInEvent,
+    administrators: UserInformationInEvent[],
+    category: string,
+    tags: string[],
+    date: Date,
+    place: string,
+    description: string,
+    limit: number,
+    isFree: boolean,
+    isPublished?: boolean,
+    price?: number
+}
+
+export async function eventDetail(req: Request, res: Response, next: NextFunction) {
+    try {
+        const eventId = req.params.eventId;
+
+        // user and id validations
+        if(!req.user) throw new HttpError("Not Authenticated", 403);
+        isValidObjId([{id: eventId, model: "event"}]);
+
+        // event validation and data
+        const event = await Event.findOne({_id: eventId})
+            .populate("creator")
+            .populate("administrators");
+
+        if(!event) throw new HttpError("event not found", 404);
+
+        const isCreatorOrAdmin = await isUserEventOwnerOrAdmin({userId: req.user._id, eventId});
+
+        // if event is not published only the creator and
+        // added administrators can access the information
+        if(!event.isPublished && !isCreatorOrAdmin) throw new HttpError("you don't have access to event information", 400);
+
+        const eventInformation: EventDetailInformation = {
+            name: event.name,
+            banner: event.banner,
+            creator: getPopulatedCreatorInEvent(event.creator),
+            administrators: getPopulatedAdminsInEvent(event.administrators) ,
+            category: event.category,
+            tags: event.tags,
+            date: event.date,
+            place: event.place,
+            description: event.description,
+            limit: event.limit,
+            isFree: event.isFree,
+            price: event.price
+        };
+
+        if(isCreatorOrAdmin) {
+            eventInformation["isPublished"] = event.isPublished;
+        }
+
+        res.status(200).json(eventInformation);
+    } catch (error) {
+        next(error);
     }
 }

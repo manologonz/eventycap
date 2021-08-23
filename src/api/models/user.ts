@@ -51,6 +51,10 @@ userShcema.virtual("fullname").get(function(this: UserDocument) {
     return `${this.firstName} ${this.lastName}`;
 });
 
+userShcema.methods.comparePassword = async function (password: string): Promise<boolean> {
+    return bcrypt.compare(password, this.password);
+}
+
 userShcema.statics.findUserAndValidatePassword = async function(
     passwd: string,
     email: string,
@@ -96,8 +100,9 @@ export interface IAuthTokenPayload extends JwtPayload{
     role: string
     verifiedEmail: boolean,
 }
-export interface UserBaseDocument extends IUser, Document{
+export interface UserBaseDocument extends IUser, Document {
     fullname: string;
+    comparePassword(password: string): Promise<boolean>;
 }
 
 export interface UserDocument extends UserBaseDocument {

@@ -1,7 +1,8 @@
 import User from "../models/user";
-import { HttpError } from "../../utils/types";
+import { matchingPasswords } from "../../utils/helpers";
 import {checkSchema, ValidationChain, CustomValidator} from "express-validator";
 import {requiredMessage,stringMessage, emptyStringMessage, dateMessage, intMessage} from "./error.messages";
+import { PASSWORD_LENGTH } from "../../utils/constants";
 
 const uniqueUsername: CustomValidator = async (input) => {
     const user = await User.findOne({username: input}).lean();
@@ -12,11 +13,6 @@ const uniqueUsername: CustomValidator = async (input) => {
 const uniqueEmail: CustomValidator = async (input) => {
     const user = await User.findOne({email: input}).lean();
     if(user) return Promise.reject();
-    return true;
-}
-
-const matchingPasswords: CustomValidator = (input, {req}) => {
-    if(input !== req.body.password) throw new HttpError("passwords don't match", 400);
     return true;
 }
 
@@ -79,7 +75,10 @@ export function registerValidators(): ValidationChain[] {
         password: {
             exists: {errorMessage: requiredMessage("password"), bail: true},
             isString: {errorMessage: stringMessage("password"), bail: true},
-            isLength: {errorMessage: "password must be at least 8 characters long", options: {min: 8}}
+            isLength: {
+                errorMessage: `password must be at least ${PASSWORD_LENGTH} characters long`,
+                options: {min: PASSWORD_LENGTH}
+            }
         },
         confirmPassword: {
             exists: {errorMessage: requiredMessage("confirmPassword"), bail: true},
