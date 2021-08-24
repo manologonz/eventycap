@@ -10,7 +10,7 @@ import {
     SENDGRID_API_KEY,
 } from "./constants";
 import { AuthTokens, HttpError, ValidationErrors} from "./types";
-import { ResetPasswordMailParams } from "./constants";
+import { TokenBasedMailParams } from "./constants";
 import { CustomValidator } from "express-validator";
 import sendgridEmailHandler, {MailDataRequired} from "@sendgrid/mail";
 import moment from "moment";
@@ -46,6 +46,7 @@ export function createTokens(user: UserDocument): AuthTokens {
 
     const tokenPayload: IAuthTokenPayload = {
         _id: user._id,
+        email: user.email,
         username: user.username,
         firstName: user.firstName,
         lastName: user.lastName,
@@ -235,16 +236,31 @@ export async function sendMail(mailData: MailDataRequired) {
         const response = await sendgridEmailHandler.send(mailData);
 }
 
-export async function sendResetPasswordMail(data: ResetPasswordMailParams) {
+export async function sendResetPasswordMail(data: TokenBasedMailParams) {
     try {
-        const {toEmail, userId, resetToken} = data;
-        const link = `http://localhost:5000/reset-password?token=${resetToken}`;
+        const {toEmail, token} = data;
+        const link = `http://localhost:5000/reset-password?token=${token}`;
         const options = {
             to: toEmail,
             from: "service@senderemailtest.xyz",
             subject: "Password Reset",
-            text: "Click the link below to reset your password",
-            html: `<p>test email, backend link: ${link} </p>`
+            html: `<p>reset password email, backend link: ${link} </p>`
+        }
+        await sendMail(options);
+    } catch(error) {
+        // TODO: add error handling
+    }
+}
+
+export async function sendEmailVerificationMail(data: TokenBasedMailParams) {
+    try {
+        const {toEmail, token} = data;
+        const link = `http://localhost:5000/email-confirmation?token=${token}`;
+        const options = {
+            to: toEmail,
+            from: "service@senderemailtest.xyz",
+            subject: "Password Reset",
+            html: `<p>email confirmation, backend link: ${link} </p>`
         }
         await sendMail(options);
     } catch(error) {

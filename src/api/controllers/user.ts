@@ -4,15 +4,21 @@ import {
     checkValidationErrors,
     isValidObjId,
     getUserFromRequest,
-    sendResetPasswordMail, } from "../../utils/helpers"; import { JWT_SECRET } from "../../utils/constants";
+    sendResetPasswordMail,
+    sendEmailVerificationMail
+} from "../../utils/helpers";
+import { JWT_SECRET } from "../../utils/constants";
 import { HttpError } from "../../utils/types";
 import User, {UserDocument, UserRole} from "../models/user";
 import bcrypt from "bcryptjs";
-import Token, {TokenType} from "../models/token";
 import jwt from "jsonwebtoken";
 
-type ResetPasswdTokenPayload = {
+/**
+ * FILE TYPES
+ */
+type UpdateTokenPayload = {
     _id: string;
+    type: "EMAIL_CONFIRMATION" | "PASSWORD_RESET"
 }
 
 type UserDetail = {
@@ -24,11 +30,42 @@ type UserDetail = {
     birthDate?: string,
 }
 
+/**
+ * UTILS
+ */
+
 async function validateUserPassword(user: UserDocument, password: string) {
     const isValidPassword = await user.comparePassword(password);
     if (!isValidPassword) throw new HttpError("wrong password", 400);
 }
 
+async function getUserFromToken(resetToken: string): Promise<UserDocument> {
+    try {
+        const {_id: userId, type}: UpdateTokenPayload = jwt.decode(resetToken) as UpdateTokenPayload;
+        if(!userId || !type) throw new HttpError("expired token", 400);
+
+        const user = await User.findOne({_id: userId});
+        if(!user) throw new HttpError("user not found", 400);
+
+        let secret = JWT_SECRET + user._id;
+
+        if(type === "EMAIL_CONFIRMATION")
+            secret = JWT_SECRET + user.email;
+
+        jwt.verify(resetToken, secret);
+
+        return user;
+    } catch(error) {
+        if (error instanceof jwt.TokenExpiredError)
+            throw new HttpError("expired token", 400);
+        throw error;
+    }
+};
+
+
+/**
+ * USER DATA RETRIEVE ENDPOINTS
+ */
 export async function userDetail(req: Request, res: Response, next: Next) {
     try {
         const userId = req.params.userId as string;
@@ -68,6 +105,9 @@ export async function userProfile(req: Request, res: Response, next: Next) {
     }
 }
 
+/**
+ * USER DATA MANAGEMENT
+ */
 export async function userUpdateInfo(req: Request, res: Response, next: Next) {
     try {
         const [userId] = isValidObjId([{id: req.params.userId, model: "user"}]);
@@ -91,9 +131,68 @@ export async function userUpdateInfo(req: Request, res: Response, next: Next) {
 }
 
 
+export async function sendVerificationEmail(req: Request, res: Response, next: Next) {
+    try {
+        if(!req.user) throw new HttpError("user not found", 404);
+
+        const emailVerificationSecret = JWT_SECRET + req.user.email;
+
+        const verificationToken = jwt.sign({
+            _id: req.user._id,
+            type: "EMAIL_CONFIRMATION"
+        }, emailVerificationSecret);
+
+        sendEmailVerificationMail({
+            toEmail: req.user.email,
+            token: verificationToken
+        });
+
+        res.json({detail: "verification email sent"});
+    } catch (error) {
+        next(error);
+    }
+}
+
+
+export async function emailConfirmation(req: Request, res: Response, next: Next) {
+    try {
+        const user = await getUserFromToken(req.query.token as string);
+        user.verifiedEmail = true;
+        await user.save();
+        res.json({detail: "verified email"});
+    } catch (error) {
+        next(error);
+    }
+}
+
 export async function changeEmail(req: Request, res: Response, next: Next) {
     try {
-        res.json({detail: "not supported yet"});
+        checkValidationErrors(validationResult(req));
+
+        const [userId] = isValidObjId([{id: req.params.userId, model: "user"}]);
+
+        let user = await User.findOne({_id: userId});
+        if(!user) throw new HttpError("user not found", 404);
+
+        await validateUserPassword(user, req.body.password);
+
+        user.email = req.body.newEmail;
+        user.verifiedEmail = false;
+        user = await user.save();
+
+        const emailVerificationSecret = JWT_SECRET + user.email;
+
+        const verificationToken = jwt.sign({
+            _id: user._id,
+            type: "EMAIL_CONFIRMATION"
+        }, emailVerificationSecret, {expiresIn: "1d"});
+
+        sendEmailVerificationMail({
+            toEmail: req.body.newEmail,
+            token: verificationToken
+        });
+
+        res.json({detail: "email change, confirm email"});
     } catch (error) {
         next(error);
     }
@@ -118,43 +217,11 @@ export async function changeUsername(req: Request, res: Response, next: Next) {
     }
 }
 
-async function getUserFromResetToken(resetToken: string): Promise<UserDocument> {
-    try {
-        const {_id: userId}: ResetPasswdTokenPayload = jwt.decode(resetToken) as ResetPasswdTokenPayload;
-        if(!userId) throw new HttpError("expired token", 400);
-
-        const user = await User.findOne({_id: userId});
-        if(!user) throw new HttpError("user not found", 400);
-
-        const resetPasswdSecret = JWT_SECRET + user._id;
-
-        jwt.verify(resetToken, resetPasswdSecret);
-
-        return user;
-    } catch(error) {
-        if(error instanceof jwt.TokenExpiredError) throw new HttpError("expired token", 400);
-        throw error;
-    }
-};
-
-
-export async function resetPassword(req: Request, res: Response, next: Next) {
-    try {
-        checkValidationErrors(validationResult(req));
-        const user = await getUserFromResetToken(req.query.token as string);
-        user.password = await bcrypt.hash(req.body.newPassword, 12);
-        await user.save();
-        res.status(200).json({detail: "password changed"});
-    } catch (error) {
-        next(error);
-    }
-}
-
 export async function changePassword(req: Request, res: Response, next: Next) {
     try {
         checkValidationErrors(validationResult(req));
 
-        const user = await getUserFromResetToken(req.query.token as string);
+        const user = await getUserFromToken(req.query.token as string);
 
         const isValid = bcrypt.compare(req.body.currentPassword, user.password);
         if(!isValid) throw new HttpError("wrong password", 400);
@@ -168,11 +235,29 @@ export async function changePassword(req: Request, res: Response, next: Next) {
     }
 }
 
+/**
+ * PASSWORD RESET ENDPOINTS
+ */
+
+// Reset password through email
+export async function resetPassword(req: Request, res: Response, next: Next) {
+    try {
+        checkValidationErrors(validationResult(req));
+        const user = await getUserFromToken(req.query.token as string);
+        user.password = await bcrypt.hash(req.body.newPassword, 12);
+        await user.save();
+        res.status(200).json({detail: "password changed"});
+    } catch (error) {
+        next(error);
+    }
+}
+
+// Sends reset email
 export async function requestChangePassword(req: Request, res: Response, next: Next) {
     try {
         checkValidationErrors(validationResult(req));
         const user = await User.findOne({email: req.body.email});
-        if(user) {
+        if(user && user.verifiedEmail) {
             const resetSecret = JWT_SECRET + user._id;
             const token = jwt.sign({
                 _id: user._id,
@@ -180,22 +265,26 @@ export async function requestChangePassword(req: Request, res: Response, next: N
 
             await sendResetPasswordMail({
                 toEmail: user.email,
-                userId: user._id,
-                resetToken: token
+                token: token
             });
-        };
+        } else if(user && !user.verifiedEmail) {
+            throw new HttpError("email not verified", 400);
+        }
+
         res.status(200).json({});
     } catch (error) {
         next(error);
     }
 }
 
+// Endpoint validates if the token is expired (for frontend functionalitiy)
 export async function validateResetPasswordToken(req: Request, res: Response, next: Next) {
     try {
         const token = req.query.token as string;
-        const {_id: userId}: ResetPasswdTokenPayload = jwt.decode(token) as ResetPasswdTokenPayload;
+        const {_id: userId, type}: UpdateTokenPayload = jwt.decode(token) as UpdateTokenPayload;
         const resetPasswdSecret = JWT_SECRET + userId;
         jwt.verify(token, resetPasswdSecret);
+        if(type !== "PASSWORD_RESET") throw new HttpError("invalid token", 400);
         res.status(200).json({detail: "valid token"});
     } catch (error) {
         next(new HttpError("expired token", 400));

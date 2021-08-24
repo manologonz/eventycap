@@ -86,8 +86,7 @@ const imageFilter = (req: Request, file: Express.Multer.File, cb: any) => {
 
 export const upload = multer({storage, fileFilter: imageFilter});
 
-export type ResetPasswordMailParams = {
+export type TokenBasedMailParams = {
     toEmail: string,
-    userId: string,
-    resetToken: string
+    token: string
 }

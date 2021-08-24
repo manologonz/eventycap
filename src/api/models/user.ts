@@ -97,6 +97,7 @@ export interface IAuthTokenPayload extends JwtPayload{
     username: string,
     firstName: string,
     lastName: string,
+    email: string,
     role: string
     verifiedEmail: boolean,
 }

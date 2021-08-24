@@ -37,6 +37,7 @@ router.post(
 );
 router.post("/:userId/password", changePasswordVal(), changePassword);
 router.post("/:userId/email", userUpdatePerms, changeEmail);
+router.post("/:userId/email-confirmation", userUpdatePerms, changeEmail);
 router.post("/:userId/username", userUpdatePerms, changeUsernameVal(), changeUsername);
 router.put("/:userId", userUpdatePerms, updateInfoValidators(), userUpdateInfo);
 

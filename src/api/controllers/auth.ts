@@ -12,17 +12,20 @@ import * as bcrypt from "bcryptjs";
 export async function login(req: Request, res: Response, next: NextFunction) {
     try {
         checkValidationErrors(validationResult(req)); // request data validation
+
         const user = await User.findUserAndValidatePassword(
             req.body.password,
             req.body.email
         );
         if(!user) throw new HttpError("wrong username or password", 400);
+
         const {
             new_access_token: access_token,
             new_refresh_token,
             refresh_token_expiry,
             access_token_expiry,
         } = createTokens(user);
+
         res.cookie("refresh_token", new_refresh_token, {
             httpOnly: true,
             expires: refresh_token_expiry,
