@@ -14,11 +14,23 @@ function getTokenFromHeader(req: Request): string {
     return authHeader.split(" ")[1];
 }
 
-export function isAuthenticated(req: Request, res: Response, next: NextFunction) {
+export async function isAuthenticated(req: Request, res: Response, next: NextFunction) {
     try {
         const token = getTokenFromHeader(req);
         const payload = jwt.verify(token, JWT_SECRET) as IAuthTokenPayload;
-        req.user = payload;
+        const user = await User.findOne({_id: payload._id});
+
+        if(!user) throw new HttpError("not authorized", 403);
+
+        req.user = {
+            _id: user._id,
+            username: user.username,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+            verifiedEmail: user.verifiedEmail,
+            role: UserRole[user.role]
+        };
         next();
     } catch (error) {
         if (error instanceof jwt.TokenExpiredError) {

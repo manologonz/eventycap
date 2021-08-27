@@ -6,9 +6,12 @@ import { userDetail,
     changeUsername,
     requestChangePassword,
     validateResetPasswordToken,
-    changePassword
+    changePassword,
+    emailConfirmation,
+    sendVerificationEmail
 } from "../controllers/user";
 import {
+    changeEmailVal,
     changePasswordVal,
     changeUsernameVal,
     requestChangePasswordVal,
@@ -35,9 +38,10 @@ router.post(
     "/reset-password/validate-token",
     validateResetPasswordToken
 );
+router.post("/email-confirmation", emailConfirmation);
+router.post("/:userId/send-email-confirmation-mail", userUpdatePerms, sendVerificationEmail);
 router.post("/:userId/password", changePasswordVal(), changePassword);
-router.post("/:userId/email", userUpdatePerms, changeEmail);
-router.post("/:userId/email-confirmation", userUpdatePerms, changeEmail);
+router.post("/:userId/email", userUpdatePerms, changeEmailVal(), changeEmail);
 router.post("/:userId/username", userUpdatePerms, changeUsernameVal(), changeUsername);
 router.put("/:userId", userUpdatePerms, updateInfoValidators(), userUpdateInfo);
 

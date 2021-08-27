@@ -259,7 +259,7 @@ export async function sendEmailVerificationMail(data: TokenBasedMailParams) {
         const options = {
             to: toEmail,
             from: "service@senderemailtest.xyz",
-            subject: "Password Reset",
+            subject: "Email confirmation",
             html: `<p>email confirmation, backend link: ${link} </p>`
         }
         await sendMail(options);

@@ -45,6 +45,7 @@ async function getUserFromToken(resetToken: string): Promise<UserDocument> {
         if(!userId || !type) throw new HttpError("expired token", 400);
 
         const user = await User.findOne({_id: userId});
+        console.log("something")
         if(!user) throw new HttpError("user not found", 400);
 
         let secret = JWT_SECRET + user._id;
@@ -134,6 +135,11 @@ export async function userUpdateInfo(req: Request, res: Response, next: Next) {
 export async function sendVerificationEmail(req: Request, res: Response, next: Next) {
     try {
         if(!req.user) throw new HttpError("user not found", 404);
+        const user = await User.findOne({_id: req.user._id});
+        console.log(user)
+
+        if(req.user.verifiedEmail)
+            throw new HttpError("email already verified", 400);
 
         const emailVerificationSecret = JWT_SECRET + req.user.email;
 
@@ -157,9 +163,10 @@ export async function sendVerificationEmail(req: Request, res: Response, next: N
 export async function emailConfirmation(req: Request, res: Response, next: Next) {
     try {
         const user = await getUserFromToken(req.query.token as string);
+        if(user.verifiedEmail) throw new HttpError("invalid token", 400);
         user.verifiedEmail = true;
         await user.save();
-        res.json({detail: "verified email"});
+        res.json({detail: "email confirmated"});
     } catch (error) {
         next(error);
     }
@@ -175,6 +182,9 @@ export async function changeEmail(req: Request, res: Response, next: Next) {
         if(!user) throw new HttpError("user not found", 404);
 
         await validateUserPassword(user, req.body.password);
+
+        if(req.body.newEmail === user.email)
+            throw new HttpError("new email is the current email, it will not be updated.", 400);
 
         user.email = req.body.newEmail;
         user.verifiedEmail = false;

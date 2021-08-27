@@ -17,6 +17,14 @@ const uniqueUsername: CustomValidator = async (input, {req}) => {
     return true;
 }
 
+
+const uniqueEmail: CustomValidator = async (input, {req}) => {
+    const user = await User.findOne({email: input}).lean();
+    if(user && req.user._id !== user._id.toString())
+        return Promise.reject("email already in use");
+    return true;
+}
+
 export function updateInfoValidators(): ValidationChain[] {
     const firstName = body("firstName")
         .exists()
@@ -117,4 +125,28 @@ export function changeUsernameVal(): ValidationChain[] {
         .withMessage(stringMessage("password"));
 
     return [newUsername, password]
+}
+
+export function changeEmailVal(): ValidationChain[] {
+
+    const newEmail = body("newEmail")
+        .exists()
+        .withMessage(requiredMessage("newEmail"))
+        .bail()
+        .isEmail()
+        .withMessage("enter a valid email")
+        .bail()
+        .custom(uniqueEmail)
+        .withMessage("email address already in use")
+        .trim()
+        .normalizeEmail();
+
+    const password = body("password")
+        .exists()
+        .withMessage(requiredMessage("password"))
+        .bail()
+        .isString()
+        .withMessage(stringMessage("password"));
+
+    return [newEmail, password]
 }
