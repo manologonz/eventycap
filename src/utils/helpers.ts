@@ -15,8 +15,6 @@ import { CustomValidator } from "express-validator";
 import sendgridEmailHandler, {MailDataRequired} from "@sendgrid/mail";
 import moment from "moment";
 import jwt from "jsonwebtoken";
-import axios from "axios";
-import nodemail from "nodemailer";
 
 // custom validators
 export const matchingPasswords: CustomValidator = (input, {req}) => {
