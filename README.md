@@ -6,7 +6,7 @@ can sign in to those events as guests, and rate the event after its done.
 * ReactJS
 * NodeJS
 * ExpressJS
-* TypeScipt
+* TypeScript
 
 ## Getting Started
 1. clone the project
