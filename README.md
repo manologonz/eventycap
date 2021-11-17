@@ -1,49 +1,60 @@
-# Express Typescript API Starter
+# Evenctycap
+Is a social (fecebook like) event app, where users can create any type of events, other users<br>
+can sign in to those events as guests, and rate the event after its done.
 
-## Packages
+## Technologies
+* ReactJS
+* NodeJS
+* ExpressJS
+* TypeScipt
 
-* bcryptjs
-* cors
-* dotenv
-* express
-* express-paginate
-* express-validator
-* helmet
-* jsonwebtoken
-* morgan
-* multer
-* uuid
+## Getting Started
+1. clone the project
+2. run npm i
+3. create an .env file within the root folder with the necesary values
 
-## Dev Packages
+## Required values for the .env file
 
-* @types/cors
-* @types/express
-* @types/morgan
-* @types/express-paginate
-* @types/node
-* nodemo
-* ts-node
-* typescript
+* NODE_ENV: node execution environtent.
+	* example: test, development, production.
+* PORT: port on wich the API will be served.
+	* example: 3000.
+* JWT_SECRET: the secret to sign the user tokens.
+	* example: mysupersecuresecret123
+* MONGODB_URL: mongodb base url (no database name included).
+	* example: "mongodb://localhost:12314".
+* DBNAME: name of the database to use.
+	* example: mydb
+* TEST_DBNAME: name of the databa to use when runing tests.
+	* example: mydb_test
+* ACCESS_TOKEN_EXPIRY: time for the jwt access token to expire (minutes).
+	* example: 5 (minutes)
+* REFRESH_TOKEN_EXPIRY: time for the jwt refresh token to expire (days).
+	* example: 30 (days)
+* SENDGRID_API_KEY: api key for the app mailing system.
+	* example: SG.mysengridsupersecretapikey
 
-## Setup
+## COMMANDS
+
+### Setup
 
 ```text
 npm install
 ```
 
-## Typescript to Javascript compilation
+### Typescript to Javascript compilation
 
 ```text
 npm build
 ```
 
-## Development
+### Development
 
 ```text
 npm run dev
 ```
 
-## Production
+### Production
 
 ```text
 npm start
